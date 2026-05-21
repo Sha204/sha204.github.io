@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI PRD Generator — Shalaka Mhaske</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=DM+Sans:wght@400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #0d0d15;
+    --border: #1e1e2e;
+    --border2: #2a2a3e;
+    --text: #e8e6e0;
+    --muted: #9ca3af;
+    --dim: #6b7280;
+    --faint: #4b5563;
+    --accent: #6366f1;
+    --accent2: #a78bfa;
+    --green: #22c55e;
+    --blue: #3b82f6;
+    --orange: #f97316;
+    --red: #ef4444;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface2);
+  }
+
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .logo-title { font-size: 15px; font-weight: 700; letter-spacing: 0.04em; }
+  .logo-sub { font-size: 11px; color: var(--faint); letter-spacing: 0.1em; text-transform: uppercase; }
+  .header-right { font-size: 11px; color: var(--faint); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  main { max-width: 860px; margin: 0 auto; padding: 48px 20px; }
+
+  .hero { text-align: center; margin-bottom: 48px; }
+  .hero h1 {
+    font-family: 'Lora', serif;
+    font-size: clamp(26px, 5vw, 44px);
+    font-weight: 400;
+    line-height: 1.25;
+    color: var(--text);
+    margin-bottom: 14px;
+    letter-spacing: -0.02em;
+  }
+  .hero h1 span {
+    background: linear-gradient(90deg, #6366f1, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero p { color: var(--dim); font-size: 15px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 16px;
+  }
+
+  label.field-label {
+    display: block;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    line-height: 1.6;
+  }
+  textarea:focus { border-color: var(--accent); }
+
+  .examples { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .examples span { font-size: 11px; color: var(--faint); }
+  .example-btn {
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 4px 12px;
+    color: var(--dim);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .example-btn:hover { border-color: var(--accent); color: var(--accent2); }
+
+  #generate-btn {
+    margin-top: 20px;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 0.02em;
+    transition: opacity 0.2s;
+  }
+  #generate-btn:disabled { background: var(--border); color: var(--faint); cursor: not-allowed; }
+  #generate-btn:not(:disabled):hover { opacity: 0.9; }
+
+  .error-box {
+    background: #1a0a0a;
+    border: 1px solid #7f1d1d;
+    border-radius: 10px;
+    padding: 16px;
+    color: #fca5a5;
+    font-size: 14px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 48px;
+    color: var(--faint);
+    display: none;
+  }
+  .spin { display: inline-block; font-size: 28px; animation: spin 1.5s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #prd-output { display: none; animation: fadeIn 0.5s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .prd-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .prd-tag { font-size: 11px; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+  .prd-title { font-family: 'Lora', serif; font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .prd-overview { color: var(--muted); font-size: 14px; }
+
+  .copy-btn {
+    background: var(--border);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .copy-btn.copied { background: #166534; border-color: #166534; color: #86efac; }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: var(--dim);
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .tab-btn.active { background: #1e1e3a; border-color: var(--accent); color: var(--accent2); }
+
+  .section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .section-card.visible { display: block; animation: fadeIn 0.3s ease; }
+
+  .section-title {
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  @media (max-width: 600px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    header { padding: 16px 20px; }
+    .prd-header { flex-direction: column; }
+  }
+
+  .inner-card {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .inner-label {
+    font-size: 11px;
+    color: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .inner-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+  .problem-statement { font-size: 16px; color: var(--text); line-height: 1.7; margin-bottom: 20px; }
+
+  .persona-card {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .persona-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .persona-avatar {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .persona-name { font-weight: 600; color: var(--text); font-size: 15px; }
+  .persona-role { font-size: 12px; color: var(--dim); }
+
+  .metric-col { background: var(--surface2); border-radius: 10px; padding: 16px; }
+  .metric-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; font-weight: 600; }
+  .metric-item {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    padding-left: 12px;
+    line-height: 1.5;
+  }
+
+  .story-item {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .priority-badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .story-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+  .edge-item {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+  .edge-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .risk-badge { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 700; flex-shrink: 0; }
+  .edge-case { font-size: 14px; color: var(--text); }
+  .edge-mitigation { font-size: 13px; color: var(--faint); padding-left: 4px; }
+
+  .prd-footer { text-align: center; padding: 16px; color: var(--border2); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">📄</div>
+    <div>
+      <div class="logo-title">PRD Generator</div>
+      <div class="logo-sub">by Shalaka Mhaske</div>
+    </div>
+  </div>
+  <div class="header-right">AI Product Specialist</div>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>Turn a feature idea into<br><span>a complete PRD</span></h1>
+    <p>Problem · Personas · Metrics · User Stories · Edge Cases</p>
+  </div>
+
+  <div class="card">
+    <label class="field-label">Describe your feature</label>
+    <textarea id="feature-input" rows="3" placeholder="e.g. A smart notification system that learns when users are most engaged and sends alerts at the optimal time..."></textarea>
+
+    <div class="examples">
+      <span>Try:</span>
+      <button class="example-btn" onclick="setExample('A feature that lets users save and replay their past AI conversations')">Save & replay AI conversations</button>
+      <button class="example-btn" onclick="setExample('An in-app language switcher for a multilingual food delivery app')">Multilingual food delivery app</button>
+      <button class="example-btn" onclick="setExample('Smart calendar that auto-schedules tasks based on user habits')">Smart task scheduler</button>
+    </div>
+
+    <button id="generate-btn" onclick="generatePRD()">Generate PRD →</button>
+  </div>
+
+  <div class="error-box" id="error-box"></div>
+
+  <div class="loading" id="loading">
+    <div class="spin">⚙️</div>
+    <div style="margin-top:12px;font-size:14px;">Thinking like a PM...</div>
+  </div>
+
+  <div id="prd-output">
+    <div class="prd-header">
+      <div>
+        <div class="prd-tag">Product Requirements Document</div>
+        <div class="prd-title" id="prd-title"></div>
+        <div class="prd-overview" id="prd-overview"></div>
+      </div>
+      <button class="copy-btn" id="copy-btn" onclick="copyPRD()">Copy PRD</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showSection('problem', this)">⚡ Problem</button>
+      <button class="tab-btn" onclick="showSection('personas', this)">👤 Personas</button>
+      <button class="tab-btn" onclick="showSection('metrics', this)">📊 Metrics</button>
+      <button class="tab-btn" onclick="showSection('stories', this)">📋 User Stories</button>
+      <button class="tab-btn" onclick="showSection('edge', this)">⚠️ Edge Cases</button>
+    </div>
+
+    <div class="section-card visible" id="sec-problem">
+      <div class="section-title">⚡ Problem Statement</div>
+      <div class="problem-statement" id="prob-statement"></div>
+      <div class="grid-2">
+        <div class="inner-card">
+          <div class="inner-label">Why Now</div>
+          <div class="inner-text" id="prob-context"></div>
+        </div>
+        <div class="inner-card">
+          <div class="inner-label">Current Workaround</div>
+          <div class="inner-text" id="prob-pain"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card" id="sec-personas">
+      <div class="section-title">👤 User Personas</div>
+      <div class="grid-2" id="personas-grid"></div>
+    </div>
+
+    <div class="section-card" id="sec-metrics">
+      <div class="section-title">📊 Success Metrics</div>
+      <div class="grid-3" id="metrics-grid"></div>
+    </div>
+
+    <div class="section-card" id="sec-stories">
+      <div class="section-title">📋 User Stories</div>
+      <div id="stories-list"></div>
+    </div>
+
+    <div class="section-card" id="sec-edge">
+      <div class="section-title">⚠️ Edge Cases & Risks</div>
+      <div id="edge-list"></div>
+    </div>
+
+    <div class="prd-footer">Built by Shalaka Mhaske · sha204.github.io</div>
+  </div>
+</main>
+
+<script>
+let currentPRD = null;
+
+function setExample(text) {
+  document.getElementById('feature-input').value = text;
+}
+
+function showSection(name, btn) {
+  document.querySelectorAll('.section-card').forEach(el => el.classList.remove('visible'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('visible');
+  btn.classList.add('active');
+}
+
+function getPriorityColor(p) {
+  if (p === 'P0') return '#ef4444';
+  if (p === 'P1') return '#f97316';
+  if (p === 'P2') return '#3b82f6';
+  return '#6b7280';
+}
+
+function getRiskColor(r) {
+  if (r === 'High') return '#ef4444';
+  if (r === 'Medium') return '#f97316';
+  return '#22c55e';
+}
+
+function renderPRD(prd) {
+  currentPRD = prd;
+
+  document.getElementById('prd-title').textContent = prd.title;
+  document.getElementById('prd-overview').textContent = prd.overview;
+  document.getElementById('prob-statement').textContent = prd.problem.statement;
+  document.getElementById('prob-context').textContent = prd.problem.context;
+  document.getElementById('prob-pain').textContent = prd.problem.current_pain;
+
+  // Personas
+  const pg = document.getElementById('personas-grid');
+  pg.innerHTML = prd.personas.map((p, i) => `
+    <div class="persona-card">
+      <div class="persona-head">
+        <div class="persona-avatar">${i === 0 ? '🙋' : '👨‍💼'}</div>
+        <div>
+          <div class="persona-name">${p.name}</div>
+          <div class="persona-role">${p.role}</div>
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div class="inner-label">Goal</div>
+        <div class="inner-text">${p.goal}</div>
+      </div>
+      <div>
+        <div class="inner-label">Frustration</div>
+        <div class="inner-text">${p.frustration}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // Metrics
+  const mg = document.getElementById('metrics-grid');
+  mg.innerHTML = `
+    <div class="metric-col">
+      <div class="metric-label" style="color:#22c55e">Primary KPIs</div>
+      ${prd.metrics.primary.map(m => `<div class="metric-item" style="border-left:2px solid #22c55e">${m}</div>`).join('')}
+    </div>
+    <div class="metric-col">
+      <div class="metric-label" style="color:#3b82f6">Secondary</div>
+      ${prd.metrics.secondary.map(m => `<div class="metric-item" style="border-left:2px solid #3b82f6">${m}</div>`).join('')}
+    </div>
+    <div class="metric-col">
+      <div class="metric-label" style="color:#ef4444">Guardrails</div>
+      ${prd.metrics.guardrails.map(m => `<div class="metric-item" style="border-left:2px solid #ef4444">${m}</div>`).join('')}
+    </div>
+  `;
+
+  // Stories
+  const sl = document.getElementById('stories-list');
+  sl.innerHTML = prd.stories.map(s => `
+    <div class="story-item">
+      <span class="priority-badge" style="background:${getPriorityColor(s.priority)}22;color:${getPriorityColor(s.priority)}">${s.priority}</span>
+      <div class="story-text">As a <strong style="color:#e8e6e0">${s.as}</strong>, I want to <strong style="color:#e8e6e0">${s.want}</strong>, so that <span style="color:#a78bfa">${s.so}</span></div>
+    </div>
+  `).join('');
+
+  // Edge cases
+  const el = document.getElementById('edge-list');
+  el.innerHTML = prd.edge.map(e => `
+    <div class="edge-item">
+      <div class="edge-head">
+        <span class="risk-badge" style="background:${getRiskColor(e.risk)}22;color:${getRiskColor(e.risk)}">${e.risk}</span>
+        <span class="edge-case">${e.case}</span>
+      </div>
+      <div class="edge-mitigation">→ ${e.mitigation}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('prd-output').style.display = 'block';
+}
+
+async function generatePRD() {
+  const feature = document.getElementById('feature-input').value.trim();
+  if (!feature) return;
+
+  const btn = document.getElementById('generate-btn');
+  const errorBox = document.getElementById('error-box');
+  const loadingEl = document.getElementById('loading');
+
+  btn.disabled = true;
+  btn.textContent = 'Generating...';
+  errorBox.style.display = 'none';
+  loadingEl.style.display = 'block';
+  document.getElementById('prd-output').style.display = 'none';
+
+  const prompt = `Generate a PRD for this feature: "${feature}"
+
+Return ONLY raw valid JSON, no markdown, no backticks, no explanation:
+{"title":"...","overview":"...","problem":{"statement":"...","context":"...","current_pain":"..."},"personas":[{"name":"...","role":"...","goal":"...","frustration":"..."},{"name":"...","role":"...","goal":"...","frustration":"..."}],"metrics":{"primary":["...","..."],"secondary":["...","..."],"guardrails":["..."]},"stories":[{"as":"...","want":"...","so":"...","priority":"P0"},{"as":"...","want":"...","so":"...","priority":"P1"},{"as":"...","want":"...","so":"...","priority":"P1"},{"as":"...","want":"...","so":"...","priority":"P2"}],"edge":[{"case":"...","risk":"High","mitigation":"..."},{"case":"...","risk":"Medium","mitigation":"..."},{"case":"...","risk":"Low","mitigation":"..."}]}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        system: 'You are a senior AI Product Manager. Respond with ONLY raw valid JSON. No markdown. No backticks. No preamble.',
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e?.error?.message || 'API error ' + res.status);
+    }
+
+    const data = await res.json();
+    const text = (data.content || []).map(i => i.text || '').join('');
+    const clean = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
+    const prd = JSON.parse(clean);
+    renderPRD(prd);
+
+  } catch (err) {
+    errorBox.textContent = 'Error: ' + (err.message || 'Something went wrong. Try again!');
+    errorBox.style.display = 'block';
+  } finally {
+    loadingEl.style.display = 'none';
+    btn.disabled = false;
+    btn.textContent = 'Generate PRD →';
+  }
+}
+
+function copyPRD() {
+  if (!currentPRD) return;
+  const p = currentPRD;
+  const text = [
+    `PRD: ${p.title}`,
+    `Overview: ${p.overview}`,
+    `\nPROBLEM\n${p.problem.statement}`,
+    `Context: ${p.problem.context}`,
+    `Current workaround: ${p.problem.current_pain}`,
+    `\nUSER PERSONAS`,
+    ...p.personas.map(pe => `${pe.name} (${pe.role})\nGoal: ${pe.goal}\nFrustration: ${pe.frustration}`),
+    `\nSUCCESS METRICS`,
+    `Primary: ${p.metrics.primary.join(' | ')}`,
+    `Secondary: ${p.metrics.secondary.join(' | ')}`,
+    `Guardrails: ${p.metrics.guardrails.join(' | ')}`,
+    `\nUSER STORIES`,
+    ...p.stories.map(s => `[${s.priority}] As a ${s.as}, I want to ${s.want}, so that ${s.so}`),
+    `\nEDGE CASES`,
+    ...p.edge.map(e => `[${e.risk}] ${e.case} → ${e.mitigation}`),
+    `\nBuilt by Shalaka Mhaske · sha204.github.io`
+  ].join('\n');
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy PRD'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
+</body>
+</html>
